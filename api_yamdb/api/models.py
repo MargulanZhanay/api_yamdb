@@ -9,6 +9,13 @@ class User(AbstractUser):
         ('moderator', 'Модератор'),
     ]
 
+    username = models.CharField(max_length=150,
+                                blank=False,
+                                null=False,
+                                unique=True)
+    email = models.EmailField(blank=False,
+                              null=False,
+                              unique=True)
     role = models.CharField(max_length=15,
                             choices=ROLES,
                             default='user',
