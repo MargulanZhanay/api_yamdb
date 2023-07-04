@@ -8,8 +8,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-AUTH_USER_MODEL = 'users.User'
-
+AUTH_USER_MODEL = 'api.User'
 
 
 INSTALLED_APPS = [
@@ -19,9 +18,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'api',
-    'reviews',
-    'users'
+    'reviews'
 ]
 
 MIDDLEWARE = [
@@ -64,7 +63,6 @@ DATABASES = {
 }
 
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -81,7 +79,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -93,7 +90,8 @@ USE_L10N = True
 USE_TZ = True
 
 
-
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
