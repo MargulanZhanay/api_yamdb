@@ -4,12 +4,6 @@ from django.db import models
 from django.utils import timezone
 
 
-class EmailConfirmation(models.Model):
-    email = models.EmailField(unique=True)
-    code = models.CharField(max_length=10)
-    created_at = models.DateTimeField(default=timezone.now)
-
-
 class UserManager(BaseUserManager):
 
     def create_user(self, username, email, password=None):
@@ -27,7 +21,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, email, password):
-        """ Создает и возввращет пользователя с привилегиями суперадмина. """
+        """ Создает и возвращет пользователя с привилегиями суперадмина. """
         if password is None:
             raise TypeError('Суперадмин должен иметь пароль.')
 
@@ -64,3 +58,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email']
 
     objects = UserManager()
+
+
+class EmailConfirmation(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='confirm',
+        verbose_name='Пользователь'
+    )
+    confirmation_code = models.CharField(max_length=10)
+    created_at = models.DateTimeField(default=timezone.now)
