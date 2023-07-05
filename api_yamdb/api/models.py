@@ -68,4 +68,5 @@ class EmailConfirmation(models.Model):
         verbose_name='Пользователь'
     )
     confirmation_code = models.CharField(max_length=10)
+    confirmed = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)

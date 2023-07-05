@@ -1,12 +1,17 @@
 """Вьюхи приложения api."""
+from django.conf import settings
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from django.utils.crypto import get_random_string
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets
-
-from .serializers import ConfirmRegistrationSerializer, RegistrationSerializer, ReviewSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 from reviews.models import Title
+
+from .models import EmailConfirmation, User
+from .serializers import (ConfirmRegistrationSerializer,
+                          RegistrationSerializer, ReviewSerializer)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -29,9 +34,20 @@ class RegistrationAPIView(APIView):
     serializer_class = RegistrationSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user = User.objects.create_user(**serializer.data)
+        email = request.data.get('email')
+        code = get_random_string(10)
+
+        # Сохранение кода подтверждения в базе данных
+        EmailConfirmation.objects.create(user=user,
+                                         confirmation_code=code)
+
+        # Отправка письма с кодом подтверждения
+        subject = 'Подтверждение регистрации'
+        message = f'Код для подтверждения регистрации: {code}'
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -41,8 +57,12 @@ class ConfirmationEmailAPIView(APIView):
     serializer_class = ConfirmRegistrationSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = ConfirmRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # serializer.delete()
+        user = get_object_or_404(User, pk=serializer.data.get('user'))
 
-        return Response({'token': 'token'}, status=status.HTTP_200_OK)
+        # user.confirm.first().save(confirmed=True)
+        # user = 
+        token = str(RefreshToken.for_user(user).access_token)
+
+        return Response({'token': token}, status=status.HTTP_200_OK)
