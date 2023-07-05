@@ -1,5 +1,7 @@
 from django.db import models
 
+from .validators import year_validator
+
 
 class Category(models.Model):
     name = models.CharField(
@@ -49,6 +51,7 @@ class Title(models.Model):
     )
     year = models.IntegerField(
         'Год выпуска',
+        validators=[year_validator]
     )
     description = models.TextField(
         'Описание',
