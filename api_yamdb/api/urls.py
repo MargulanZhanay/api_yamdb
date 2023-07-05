@@ -1,7 +1,12 @@
+"""Маршруты приложения api."""
+from django.conf import settings
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import ReviewViewSet
+from .views import ConfirmationEmailAPIView, RegistrationAPIView, ReviewViewSet
+
+# Версия API
+API_VERSION = settings.API_VERSION
 
 router = DefaultRouter()
 router.register(
@@ -11,5 +16,7 @@ router.register(
 )
 
 urlpatterns = [
-    path('v1/', include(router.urls)),
+    path(f'{API_VERSION}/', include(router.urls)),
+    path(f'{API_VERSION}/auth/signup/', RegistrationAPIView.as_view()),
+    path(f'{API_VERSION}/auth/token/', ConfirmationEmailAPIView.as_view())
 ]
