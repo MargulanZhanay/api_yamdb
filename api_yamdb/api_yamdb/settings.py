@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -98,3 +99,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Версия API
 API_VERSION = 'v1'
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+DEFAULT_FROM_EMAIL = 'admin@admin.ru'
