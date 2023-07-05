@@ -57,13 +57,17 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        'Жанр произведения',
-        related_name='titles'
+        verbose_name='Жанр произведения',
+        blank=False,
+        related_name='titles',
+
     )
     category = models.ForeignKey(
         Category,
-        'Категория произведения',
+        verbose_name='Категория произведения',
         on_delete=models.SET_NULL,
+        null=True,
+        blank=False,
         related_name='titles'
     )
 
@@ -79,12 +83,10 @@ class GenreTitle(models.Model):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='genres'
     )
     genre = models.ForeignKey(
         Genre,
         on_delete=models.CASCADE,
-        related_name='titles'
     )
 
     def __str__(self) -> str:
