@@ -11,7 +11,7 @@ from .filters import TitleFitler
 from .serializers import (ConfirmRegistrationSerializer,
                           RegistrationSerializer, ReviewSerializer,
                           GenreSerializer, CategorySerializer,
-                          TitleWriteSerializer, TitleReadSerializer)
+                          TitlePostSerializer, TitleGetSerializer)
 from reviews.models import Title, Category, Genre
 
 
@@ -75,9 +75,9 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         serializer_classes = {
-            'create': TitleWriteSerializer,
-            'update': TitleWriteSerializer,
-            'partial_update': TitleWriteSerializer
+            'create': TitlePostSerializer,
+            'update': TitlePostSerializer,
+            'partial_update': TitlePostSerializer
         }
-        default_serializer = TitleReadSerializer
+        default_serializer = TitleGetSerializer
         return serializer_classes.get(self.action, default_serializer)
