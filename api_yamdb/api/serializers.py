@@ -1,17 +1,40 @@
 """Сериализаторы приложения api."""
 from django.conf import settings
 from django.core.mail import send_mail
-from django.db import models
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .models import EmailConfirmation, User, Review
+from .models import EmailConfirmation, User
+from reviews.models import Genre, Title, Category, Review
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        exclude = ('id',)
+        model = Category
+
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        exclude = ('id',)
+        model = Genre
+
+
+class TitleGetSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(
+        read_only=True,
+        many=True
+    )
+    rating = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = '__all__'
 
     def get_rating(self, obj):
         reviews = obj.reviews.all()
@@ -20,6 +43,22 @@ class TitleSerializer(serializers.ModelSerializer):
         total_score = sum(review.score for review in reviews)
         rating = total_score / len(reviews)
         return rating
+
+
+class TitlePostSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug'
+    )
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True
+    )
+
+    class Meta:
+        model = Title
+        fields = '__all__'
 
 
 class ReviewSerializer(serializers.ModelSerializer):

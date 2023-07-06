@@ -1,13 +1,16 @@
 """Вьюхи приложения api."""
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .filters import TitleFitler
 from .serializers import (ConfirmRegistrationSerializer,
-                          RegistrationSerializer, ReviewSerializer)
+                          RegistrationSerializer, ReviewSerializer,
+                          GenreSerializer, CategorySerializer,
+                          TitleWriteSerializer, TitleReadSerializer)
 from reviews.models import Title
 
 
@@ -54,7 +57,16 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     )
-    filter_backends = ()
-    permission_classes = ()
+    filter_backends = (DjangoFilterBackend, )
     filterset_class = TitleFitler
+    permission_classes = ()
     http_method_names = ('get', 'post', 'patch', 'delete')
+
+    def get_serializer_class(self):
+        serializer_classes = {
+            'create': TitleWriteSerializer,
+            'update': TitleWriteSerializer,
+            'partial_update': TitleWriteSerializer
+        }
+        default_serializer = TitleReadSerializer
+        return serializer_classes.get(self.action, default_serializer)
