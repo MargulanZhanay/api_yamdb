@@ -1,11 +1,11 @@
 """Сериализаторы приложения api."""
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.response import Response
 from rest_framework.validators import UniqueTogetherValidator
 
-from .models import EmailConfirmation, User  # isort: skip
-from reviews.models import Review  # isort: skip
+from reviews.models import Review, EmailConfirmation, User  # isort: skip
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -58,13 +58,22 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
+    username = serializers.SlugRelatedField(slug_field='username')
 
     class Meta:
         model = EmailConfirmation
-        fields = ('user', 'confirmation_code')
+        fields = ('username', 'confirmation_code')
 
     def validate(self, data):
-        user = get_object_or_404(User, username=data.get('user'))
+        # user = get_object_or_404(User, username=data.get('username'))
+        username = data.get('username')
+        print(username)
+        user = User.objects.filter(username=data.get('username'))
+        if not user.exists():
+            print(user)
+            message = f'Пользователь {data.get("username")} не существует.'
+            raise serializers.ValidationError({'message': message},
+                                              status.HTTP_404_NOT_FOUND)
         confirmation_code = data.get('confirmation_code')
 
         # Если код невалидный выбрасываем исключение

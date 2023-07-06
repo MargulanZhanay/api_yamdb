@@ -7,11 +7,11 @@ from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from reviews.models import Title
 
-from .models import EmailConfirmation, User
 from .serializers import (ConfirmRegistrationSerializer,
                           RegistrationSerializer, ReviewSerializer)
+
+from reviews.models import Title, EmailConfirmation, User  # isort: skip
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -50,14 +50,14 @@ class RegistrationAPIView(APIView):
         user = User.objects.create_user(**serializer.data)
         email = request.data.get('email')
         self.send_email_confirm(user, email)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def send_email_confirm(self, user: str, email: str) -> None:
         """Отправка кода подтверждения на email."""
         code = get_random_string(10)
 
         # Сохранение кода подтверждения в базе данных
-        EmailConfirmation.objects.create(user=user,
+        EmailConfirmation.objects.create(username=user,
                                          confirmation_code=code)
 
         # Отправка письма с кодом подтверждения
@@ -73,8 +73,9 @@ class ConfirmationEmailAPIView(APIView):
     def post(self, request):
         serializer = ConfirmRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = User.objects.get(pk=serializer.data.get('user'))
-        serializer.update(user.confirm.first(), serializer.validated_data)
-        token = str(RefreshToken.for_user(user).access_token)
+        user = User.objects.filter(username=serializer.data.get('username'))
+        # serializer.update(user.confirm.first(), serializer.validated_data)
 
-        return Response({'token': token}, status=status.HTTP_200_OK)
+        # token = str(RefreshToken.for_user(user).access_token)
+
+        return Response({'token': 'token'}, status=status.HTTP_200_OK)
