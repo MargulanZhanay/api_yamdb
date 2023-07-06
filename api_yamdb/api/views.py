@@ -6,12 +6,13 @@ from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .utils import CategoryGenreMixinSet
 from .filters import TitleFitler
 from .serializers import (ConfirmRegistrationSerializer,
                           RegistrationSerializer, ReviewSerializer,
                           GenreSerializer, CategorySerializer,
                           TitleWriteSerializer, TitleReadSerializer)
-from reviews.models import Title
+from reviews.models import Title, Category, Genre
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -51,6 +52,16 @@ class ConfirmationEmailAPIView(APIView):
         # serializer.delete()
 
         return Response({'token': 'token'}, status=status.HTTP_200_OK)
+
+
+class GenreViewSet(CategoryGenreMixinSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class CategoryViewSet(CategoryGenreMixinSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
