@@ -1,11 +1,13 @@
 """Вьюхи приложения api."""
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets
 
-from .serializers import ConfirmRegistrationSerializer, RegistrationSerializer, ReviewSerializer
+from .filters import TitleFitler
+from .serializers import (ConfirmRegistrationSerializer,
+                          RegistrationSerializer, ReviewSerializer)
 from reviews.models import Title
 
 
@@ -46,3 +48,13 @@ class ConfirmationEmailAPIView(APIView):
         # serializer.delete()
 
         return Response({'token': 'token'}, status=status.HTTP_200_OK)
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    )
+    filter_backends = ()
+    permission_classes = ()
+    filterset_class = TitleFitler
+    http_method_names = ('get', 'post', 'patch', 'delete')
