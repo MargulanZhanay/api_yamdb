@@ -70,3 +70,6 @@ class EmailConfirmation(models.Model):
     confirmation_code = models.CharField(max_length=10)
     confirmed = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']

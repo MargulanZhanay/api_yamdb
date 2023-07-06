@@ -30,14 +30,30 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class RegistrationAPIView(APIView):
-    """Создает нового пользователя. Обновляет токен."""
+    """Создает нового пользователя. Отправляет код подтверждения."""
     serializer_class = RegistrationSerializer
 
     def post(self, request):
+        user = User.objects.filter(username=request.data.get('username'))
+
+        # Если пользователь существует, просто отправляем код
+        if user.exists():
+            user = user[0]
+            email = user.email
+            self.send_email_confirm(user, email)
+            return Response({'email': email, 'username': user.username},
+                            status=status.HTTP_200_OK)
+
+        # Создаем пользователя и отпраялем код.
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = User.objects.create_user(**serializer.data)
         email = request.data.get('email')
+        self.send_email_confirm(user, email)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def send_email_confirm(self, user: str, email: str) -> None:
+        """Отправка кода подтверждения на email."""
         code = get_random_string(10)
 
         # Сохранение кода подтверждения в базе данных
@@ -49,20 +65,16 @@ class RegistrationAPIView(APIView):
         message = f'Код для подтверждения регистрации: {code}'
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class ConfirmationEmailAPIView(APIView):
-    """Подтверждает регистрацию пользователя."""
+    """Подтверждает регистрацию пользователя. Обновляет токен"""
     serializer_class = ConfirmRegistrationSerializer
 
     def post(self, request):
         serializer = ConfirmRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(User, pk=serializer.data.get('user'))
-
-        # user.confirm.first().save(confirmed=True)
-        # user = 
+        user = User.objects.get(pk=serializer.data.get('user'))
+        serializer.update(user.confirm.first(), serializer.validated_data)
         token = str(RefreshToken.for_user(user).access_token)
 
         return Response({'token': token}, status=status.HTTP_200_OK)

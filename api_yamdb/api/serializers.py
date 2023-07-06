@@ -1,4 +1,5 @@
 """Сериализаторы приложения api."""
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -45,6 +46,15 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email')
 
+    def validate(self, data):
+        """Проверка запрещенных имен пользователя."""
+        username = data.get('username')
+        if username in settings.BANNED_USERNAMES:
+            message = f'Имя пользователя {username} запрещено.'
+            raise serializers.ValidationError(
+                {'message': message})
+        return data
+
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
@@ -65,3 +75,8 @@ class ConfirmRegistrationSerializer(serializers.ModelSerializer):
                 {'message': 'Некорректный код.'})
 
         return data
+
+    def update(self, instance, validated_data):
+        instance.confirmed = True
+        instance.save()
+        return instance
