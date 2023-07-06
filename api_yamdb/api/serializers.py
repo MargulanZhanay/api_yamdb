@@ -5,7 +5,7 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.validators import UniqueTogetherValidator
 
-from reviews.models import Review, EmailConfirmation, User  # isort: skip
+from reviews.models import Review, User  # isort: skip
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -40,7 +40,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    """Сериализация регистрации пользователя и создания нового."""
+    """Сериализатор регистрации пользователя."""
 
     class Meta:
         model = User
@@ -55,33 +55,32 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 {'message': message})
         return data
 
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
+    def update(self, instance, validated_data, code):
+        instance.confirmation_code = code
+        instance.save()
+        return instance
+
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
-    username = serializers.SlugRelatedField(slug_field='username')
 
     class Meta:
-        model = EmailConfirmation
+        model = User
         fields = ('username', 'confirmation_code')
 
     def validate(self, data):
-        # user = get_object_or_404(User, username=data.get('username'))
-        username = data.get('username')
-        print(username)
-        user = User.objects.filter(username=data.get('username'))
-        if not user.exists():
-            print(user)
-            message = f'Пользователь {data.get("username")} не существует.'
-            raise serializers.ValidationError({'message': message},
-                                              status.HTTP_404_NOT_FOUND)
+        user = data.get('username')
         confirmation_code = data.get('confirmation_code')
 
-        # Если код невалидный выбрасываем исключение
-        try:
-            user.confirm.get(confirmation_code=confirmation_code)
-        except EmailConfirmation.DoesNotExist:
-            raise serializers.ValidationError(
-                {'message': 'Некорректный код.'})
+        # # Если код невалидный выбрасываем исключение
+        # try:
+        #     user.confirm.get(confirmation_code=confirmation_code)
+        # except EmailConfirmation.DoesNotExist:
+        #     raise serializers.ValidationError(
+        #         {'message': 'Некорректный код.'}, code=404)
 
         return data
 
