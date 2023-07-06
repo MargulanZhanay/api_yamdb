@@ -3,7 +3,9 @@ from django.conf import settings
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import ConfirmationEmailAPIView, RegistrationAPIView, ReviewViewSet
+from .views import (ConfirmationEmailAPIView, RegistrationAPIView,
+                    ReviewViewSet, CategoryViewSet,
+                    TitleViewSet, GenreViewSet)
 
 # Версия API
 API_VERSION = settings.API_VERSION
@@ -13,6 +15,21 @@ router.register(
     r'titles/(?P<title_id>\d+)/reviews',
     ReviewViewSet,
     basename='reviews'
+)
+router.register(
+    'categories',
+    CategoryViewSet,
+    basename='categories'
+)
+router.register(
+    'genres',
+    GenreViewSet,
+    basename='genres'
+)
+router.register(
+    'titles',
+    TitleViewSet,
+    basename='titles'
 )
 
 urlpatterns = [

@@ -1,12 +1,18 @@
 """Вьюхи приложения api."""
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets
 
-from .serializers import ConfirmRegistrationSerializer, RegistrationSerializer, ReviewSerializer
-from reviews.models import Title
+from .utils import CategoryGenreMixinSet
+from .filters import TitleFitler
+from .serializers import (ConfirmRegistrationSerializer,
+                          RegistrationSerializer, ReviewSerializer,
+                          GenreSerializer, CategorySerializer,
+                          TitlePostSerializer, TitleGetSerializer)
+from reviews.models import Title, Category, Genre
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -46,3 +52,32 @@ class ConfirmationEmailAPIView(APIView):
         # serializer.delete()
 
         return Response({'token': 'token'}, status=status.HTTP_200_OK)
+
+
+class GenreViewSet(CategoryGenreMixinSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class CategoryViewSet(CategoryGenreMixinSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    )
+    filter_backends = (DjangoFilterBackend, )
+    filterset_class = TitleFitler
+    permission_classes = ()
+    http_method_names = ('get', 'post', 'patch', 'delete')
+
+    def get_serializer_class(self):
+        serializer_classes = {
+            'create': TitlePostSerializer,
+            'update': TitlePostSerializer,
+            'partial_update': TitlePostSerializer
+        }
+        default_serializer = TitleGetSerializer
+        return serializer_classes.get(self.action, default_serializer)
