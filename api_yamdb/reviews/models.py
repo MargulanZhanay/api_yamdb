@@ -9,7 +9,7 @@ from .validators import year_validator  # isort: skip
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, username, email, password=None, confirmation_code=None, *args, **kwargs):
+    def create_user(self, username, email, password=None, *args, **kwargs):
         """Создает и возвращает пользователя с имэйлом, паролем и именем."""
         if username is None:
             raise TypeError('Поле username обязательно.')
@@ -17,7 +17,7 @@ class UserManager(BaseUserManager):
         if email is None:
             raise TypeError('Поле email обязательно.')
 
-        user = self.model(username=username, email=self.normalize_email(email), confirmation_code=confirmation_code)
+        user = self.model(username=username, email=self.normalize_email(email))
         user.set_password(password)
         user.save()
 
@@ -57,13 +57,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    confirmation_code = models.CharField(max_length=10, blank=True, null=True)
-    confirmed = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
 
     objects = UserManager()
+
+
+class EmailConfirmation(models.Model):
+    username = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='confirm',
+        verbose_name='Пользователь'
+    )
+    confirmation_code = models.CharField(max_length=10)
+    confirmed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class Category(models.Model):
