@@ -5,6 +5,8 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.validators import UniqueTogetherValidator
 
+from .exceptions import CustomValidation
+
 from reviews.models import Review, EmailConfirmation, User  # isort: skip
 
 
@@ -46,6 +48,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email')
 
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
     def validate(self, data):
         """Проверка запрещенных имен пользователя."""
         username = data.get('username')
@@ -58,22 +63,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
-    username = serializers.SlugRelatedField(slug_field='username')
+    username = serializers.SlugRelatedField(slug_field='username',
+                                            queryset=User.objects.all())
 
     class Meta:
         model = EmailConfirmation
         fields = ('username', 'confirmation_code')
 
-    def validate(self, data):
-        # user = get_object_or_404(User, username=data.get('username'))
+    def to_internal_value(self, data):
         username = data.get('username')
-        print(username)
-        user = User.objects.filter(username=data.get('username'))
+        user = User.objects.filter(username=username)
         if not user.exists():
-            print(user)
-            message = f'Пользователь {data.get("username")} не существует.'
-            raise serializers.ValidationError({'message': message},
-                                              status.HTTP_404_NOT_FOUND)
+            message = f'Пользователь {username} не существует.'
+            raise CustomValidation(message,
+                                   username,
+                                   status.HTTP_404_NOT_FOUND)
+        data['username'] = user[0]
+        return data
+
+    def validate(self, data):
+        user = data.get('username')
         confirmation_code = data.get('confirmation_code')
 
         # Если код невалидный выбрасываем исключение
