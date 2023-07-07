@@ -41,7 +41,8 @@ class RegistrationAPIView(APIView):
 
         if not user.exists():
             serializer.save(confirmation_code=code)
-        serializer.update(user[0], serializer.validated_data, code)
+        else:
+            serializer.update(user[0], serializer.validated_data, code)
 
         email = request.data.get('email')
 
