@@ -1,11 +1,11 @@
 """Сериализаторы приложения api."""
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers, status
-from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .exceptions import CustomValidation
+from .utils import generate_short_hash_mm3
 
 from reviews.models import Review, EmailConfirmation, User  # isort: skip
 
@@ -43,58 +43,82 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Сериализация регистрации пользователя и создания нового."""
+    username = serializers.CharField(
+        max_length=150,
+        validators=[RegexValidator(r'^[\w.@+-]+\Z$', 'Некорректный формат.')])
+    email = serializers.EmailField(max_length=254)
 
     class Meta:
         model = User
         fields = ('username', 'email')
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        return User.objects.update_or_create(**validated_data)
 
     def validate(self, data):
-        """Проверка запрещенных имен пользователя."""
         username = data.get('username')
+        email = data.get('email')
+
+        # Проверка запрещенных имен пользователя
         if username in settings.BANNED_USERNAMES:
             message = f'Имя пользователя {username} запрещено.'
             raise serializers.ValidationError(
                 {'message': message})
+
+        # Проверка занятости email другим пользователем
+        user = User.objects.filter(email=email)
+        if user.exists() and user[0].username != username:
+            raise serializers.ValidationError(
+                {'message':
+                 f'Данный email={email} занят другим пользователем.'})
+
+        # Проверка соответствия email пользователю
+        user = User.objects.filter(username=username)
+        if user.exists() and user[0].email != email:
+            raise serializers.ValidationError(
+                {'message':
+                 f'У пользователя {user[0]} другой email.'})
+
         return data
 
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
-    username = serializers.SlugRelatedField(slug_field='username',
-                                            queryset=User.objects.all())
+    # username = serializers.SlugRelatedField(
+    #     slug_field='username',
+    #     queryset=User.objects.all())
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
 
     class Meta:
-        model = EmailConfirmation
+        # model = EmailConfirmation
+        model = User
         fields = ('username', 'confirmation_code')
 
-    def to_internal_value(self, data):
-        username = data.get('username')
-        user = User.objects.filter(username=username)
-        if not user.exists():
-            message = f'Пользователь {username} не существует.'
-            raise CustomValidation(message,
-                                   username,
-                                   status.HTTP_404_NOT_FOUND)
-        data['username'] = user[0]
-        return data
-
     def validate(self, data):
-        user = data.get('username')
+        username = data.get('username')
+        user = get_object_or_404(User, username=username)
+        # user = User.objects.filter(username=username)
         confirmation_code = data.get('confirmation_code')
 
         # Если код невалидный выбрасываем исключение
-        try:
-            user.confirm.get(confirmation_code=confirmation_code)
-        except EmailConfirmation.DoesNotExist:
+        # try:
+        #     user.confirm.get(confirmation_code=confirmation_code)
+        # except EmailConfirmation.DoesNotExist:
+        #     raise serializers.ValidationError(
+        #         {'message': 'Некорректный код.'})
+
+        # if user.exists():
+        if user:
+            # user = user[0]
+            code = generate_short_hash_mm3(
+                f'{user.username}{user.email}{user.updated_at}')
+            if code != confirmation_code:
+                raise serializers.ValidationError(
+                    {'message': 'Некорректный код.'})
+        else:
             raise serializers.ValidationError(
-                {'message': 'Некорректный код.'})
+                {'message': f'Пользователь {username} не существует.'})
 
-        return data
-
-    def update(self, instance, validated_data):
-        instance.confirmed = True
-        instance.save()
-        return instance
+        return {'username': user,
+                'confirmation_code': confirmation_code}

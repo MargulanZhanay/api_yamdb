@@ -1,5 +1,6 @@
 """Вьюхи приложения api."""
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -8,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (ConfirmRegistrationSerializer,
                           RegistrationSerializer, ReviewSerializer)
-from .utils import send_email_confirm
+from .utils import generate_short_hash_mm3, send_email_confirm
 
 from reviews.models import Title, EmailConfirmation, User  # isort: skip
 
@@ -33,31 +34,24 @@ class RegistrationAPIView(APIView):
     serializer_class = RegistrationSerializer
 
     def post(self, request):
-        user = User.objects.filter(username=request.data.get('username'))
-        email = request.data.get('email')
 
-        if not user.exists():
-            serializer = RegistrationSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user = serializer.save()
-            data = serializer.data
-        else:
-            user = user[0]
-            data = request.data
+        serializer = RegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user, created = serializer.save(
+            defaults={'updated_at': timezone.now})
 
         # Сохранение кода подтверждения в базе данных
-        code = get_random_string(10)
-        confirm = user.confirm.first()
-        if not confirm:
-            EmailConfirmation.objects.create(username=user,
-                                             confirmation_code=code)
-        else:
-            confirm.confirmation_code = code
-            confirm.save()
+        # code = get_random_string(10)
+        # EmailConfirmation.objects.update_or_create(
+        #     username=user,
+        #     defaults={'confirmation_code': code})
+
+        code = generate_short_hash_mm3(
+            f'{user.username}{user.email}{user.updated_at}')
 
         # Отправка кода на email
-        send_email_confirm(user, email, code)
-        return Response(data, status=status.HTTP_200_OK)
+        send_email_confirm(user, user.email, code)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
 class ConfirmationEmailAPIView(APIView):
@@ -66,9 +60,12 @@ class ConfirmationEmailAPIView(APIView):
 
     def post(self, request):
         serializer = ConfirmRegistrationSerializer(data=request.data)
+        # user = get_object_or_404(User, username=request.data.get('username'))
+        # user = User.objects.filter(username=request.data.get('username')).exists()
+        # if not serializer.is_valid():
+        #     return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
         serializer.is_valid(raise_exception=True)
-        user = (serializer.validated_data.get('username'))
-        serializer.update(user.confirm.first(), serializer.validated_data)
+        user = serializer.validated_data.get('username')
 
         token = str(RefreshToken.for_user(user).access_token)
 

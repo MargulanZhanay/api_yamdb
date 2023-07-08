@@ -1,5 +1,4 @@
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        PermissionsMixin)
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -7,37 +6,8 @@ from django.utils import timezone
 from .validators import year_validator  # isort: skip
 
 
-class UserManager(BaseUserManager):
-
-    def create_user(self, username, email, password=None, *args, **kwargs):
-        """Создает и возвращает пользователя с имэйлом, паролем и именем."""
-        if username is None:
-            raise TypeError('Поле username обязательно.')
-
-        if email is None:
-            raise TypeError('Поле email обязательно.')
-
-        user = self.model(username=username, email=self.normalize_email(email))
-        user.set_password(password)
-        user.save()
-
-        return user
-
-    def create_superuser(self, username, email, password):
-        """Создает и возвращет пользователя с привилегиями суперадмина."""
-        if password is None:
-            raise TypeError('Суперадмин должен иметь пароль.')
-
-        user = self.create_user(username, email, password)
-        user.is_superuser = True
-        user.is_staff = True
-        user.save()
-
-        return user
-
-
-class User(AbstractBaseUser, PermissionsMixin):
-    """Базовая модель пользователя."""
+class User(AbstractUser):
+    """Кастомная модель пользователя."""
     ROLES = [
         ('user', 'Пользователь'),
         ('admin', 'Администратор'),
@@ -47,21 +17,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(max_length=254, unique=True)
     role = models.CharField(max_length=15,
                             choices=ROLES,
                             default='user',
                             verbose_name='Роль пользователя',
                             )
     bio = models.TextField(verbose_name='Биография', blank=True)
-    is_staff = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
-
-    objects = UserManager()
+    updated_at = models.DateTimeField(default=timezone.now)
 
 
 class EmailConfirmation(models.Model):
@@ -74,9 +37,6 @@ class EmailConfirmation(models.Model):
     confirmation_code = models.CharField(max_length=10)
     confirmed = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ['-created_at']
 
 
 class Category(models.Model):

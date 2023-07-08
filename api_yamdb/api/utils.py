@@ -1,3 +1,4 @@
+import mmh3
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -8,3 +9,10 @@ def send_email_confirm(user: str, email: str, code: str) -> None:
     subject = 'Подтверждение регистрации'
     message = f'Код для подтверждения регистрации: {code}'
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+
+
+def generate_short_hash_mm3(data):
+    """Генерация короткого хеша с помощью MurmurHash."""
+    data += settings.SECRET_KEY
+    hash_value = mmh3.hash(data)
+    return str(abs(hash_value))
