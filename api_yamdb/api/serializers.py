@@ -7,7 +7,7 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from .utils import generate_short_hash_mm3
 
-from reviews.models import Review, EmailConfirmation, User  # isort: skip
+from reviews.models import Review, User  # isort: skip
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -84,41 +84,34 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
-    # username = serializers.SlugRelatedField(
-    #     slug_field='username',
-    #     queryset=User.objects.all())
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
     class Meta:
-        # model = EmailConfirmation
         model = User
         fields = ('username', 'confirmation_code')
 
     def validate(self, data):
         username = data.get('username')
         user = get_object_or_404(User, username=username)
-        # user = User.objects.filter(username=username)
         confirmation_code = data.get('confirmation_code')
 
         # Если код невалидный выбрасываем исключение
-        # try:
-        #     user.confirm.get(confirmation_code=confirmation_code)
-        # except EmailConfirmation.DoesNotExist:
-        #     raise serializers.ValidationError(
-        #         {'message': 'Некорректный код.'})
-
-        # if user.exists():
-        if user:
-            # user = user[0]
-            code = generate_short_hash_mm3(
-                f'{user.username}{user.email}{user.updated_at}')
-            if code != confirmation_code:
-                raise serializers.ValidationError(
-                    {'message': 'Некорректный код.'})
-        else:
+        code = generate_short_hash_mm3(
+            f'{user.username}{user.email}{user.updated_at}')
+        if code != confirmation_code:
             raise serializers.ValidationError(
-                {'message': f'Пользователь {username} не существует.'})
+                {'message': 'Некорректный код.'})
 
         return {'username': user,
                 'confirmation_code': confirmation_code}
+
+
+class UserListCreateSerializer(serializers.ModelSerializer):
+    """Получает пользователей списокм или создает нового."""
+
+    class Meta:
+        model = User
+        fields = ('username', 'email',
+                  'first_name', 'last_name',
+                  'bio', 'role')

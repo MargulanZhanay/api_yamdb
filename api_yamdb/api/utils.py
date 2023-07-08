@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 
-def send_email_confirm(user: str, email: str, code: str) -> None:
+def send_email_confirm(email: str, code: str) -> None:
     """Отправка кода подтверждения на email."""
 
     subject = 'Подтверждение регистрации'
@@ -11,8 +11,10 @@ def send_email_confirm(user: str, email: str, code: str) -> None:
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
 
-def generate_short_hash_mm3(data):
-    """Генерация короткого хеша с помощью MurmurHash."""
+def generate_short_hash_mm3(data: str) -> str:
+    """ Получает строку из полей username + email + updated_at,
+        добавляет к ней SECRET_KEY, генерирует короткий хеш.
+    """
     data += settings.SECRET_KEY
     hash_value = mmh3.hash(data)
     return str(abs(hash_value))

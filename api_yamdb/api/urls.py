@@ -3,7 +3,8 @@ from django.conf import settings
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import ConfirmationEmailAPIView, RegistrationAPIView, ReviewViewSet
+from .views import (ConfirmationEmailAPIView, RegistrationAPIView,
+                    ReviewViewSet, UserListCreateViewSet)
 
 # Версия API
 API_VERSION = settings.API_VERSION
@@ -14,6 +15,7 @@ router.register(
     ReviewViewSet,
     basename='reviews'
 )
+router.register('users', UserListCreateViewSet)
 
 urlpatterns = [
     path(f'{API_VERSION}/', include(router.urls)),
