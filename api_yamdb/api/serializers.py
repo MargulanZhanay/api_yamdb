@@ -6,8 +6,8 @@ from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
+from reviews.models import Category, Comments, Genre, Review, Title
 from .models import EmailConfirmation, User
-from reviews.models import Genre, Title, Category, Review
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -30,19 +30,10 @@ class TitleGetSerializer(serializers.ModelSerializer):
         read_only=True,
         many=True
     )
-    rating = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Title
         fields = '__all__'
-
-    def get_rating(self, obj):
-        reviews = obj.reviews.all()
-        if not reviews:
-            return None
-        total_score = sum(review.score for review in reviews)
-        rating = total_score / len(reviews)
-        return rating
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
@@ -62,7 +53,8 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    title = serializers.PrimaryKeyRelatedField(read_only=True)
+    """Сериализатор для модели Review."""
+
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True,
@@ -70,14 +62,28 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = '__all__'
         model = Review
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         validators = [
             UniqueTogetherValidator(
                 queryset=Review.objects.all(),
                 fields=['title', 'author']
             )
         ]
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Comments."""
+
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        fields = ('id', 'text', 'author', 'pub_date')
+        model = Comments
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
