@@ -173,3 +173,17 @@ class UserSerializer(serializers.ModelSerializer):
                  'Пользователь уже существует.'})
 
         return data
+
+
+class MeSerializer(serializers.ModelSerializer):
+    """Пользователь может получить свои данные и поменять их."""
+    username = serializers.CharField(
+        max_length=150,
+        validators=[RegexValidator(r'^[\w.@+-]+\Z$', 'Некорректный формат.')])
+    role = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email',
+                  'first_name', 'last_name',
+                  'bio', 'role')

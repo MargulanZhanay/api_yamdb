@@ -14,9 +14,9 @@ from .filters import TitleFitler
 from .permissions import IsAdmin, IsRedactor, Me, ReadOnly
 from .serializers import (CategorySerializer, CommentsSerializer,
                           ConfirmRegistrationSerializer, GenreSerializer,
-                          RegistrationSerializer, ReviewSerializer,
-                          TitleGetSerializer, TitlePostSerializer,
-                          UserSerializer)
+                          MeSerializer, RegistrationSerializer,
+                          ReviewSerializer, TitleGetSerializer,
+                          TitlePostSerializer, UserSerializer)
 from .utils import (CategoryGenreMixinSet, generate_short_hash_mm3,
                     send_email_confirm)
 
@@ -25,7 +25,6 @@ from reviews.models import Category, Genre, Review, Title, User  # isort: skip
 
 class RegistrationAPIView(APIView):
     """Создает нового пользователя. Отправляет код подтверждения."""
-    serializer_class = RegistrationSerializer
     permission_classes = (AllowAny,)
 
     def post(self, request):
@@ -48,13 +47,15 @@ class RegistrationAPIView(APIView):
 
 class ConfirmationEmailAPIView(APIView):
     """Подтверждает регистрацию пользователя. Обновляет токен"""
-    serializer_class = ConfirmRegistrationSerializer
     permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = ConfirmRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data.get('username')
+        # Обновляем дату, чтобы сделать код невалидным
+        user.updated_at = timezone.now()
+        user.save()
 
         token = str(RefreshToken.for_user(user).access_token)
 
@@ -72,14 +73,21 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
 
 
-class MeRetrieveUpdateViewSet(mixins.RetrieveModelMixin,
-                              mixins.UpdateModelMixin,
-                              viewsets.GenericViewSet):
-    http_method_names = ('get', 'patch')
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    lookup_field = 'username'
+class MeRetrieveUpdateAPIView(APIView):
+    """Пользователь может получить свои данные и поменять их."""
     permission_classes = (Me,)
+
+    def get(self, request):
+        user = request.user
+        serializer = MeSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, format=None):
+        user = request.user
+        serializer = MeSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class GenreViewSet(CategoryGenreMixinSet):
