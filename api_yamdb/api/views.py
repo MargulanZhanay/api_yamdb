@@ -1,14 +1,14 @@
 """Вьюхи приложения api."""
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import mixins, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (ConfirmRegistrationSerializer,
                           RegistrationSerializer, ReviewSerializer,
-                          UserListCreateSerializer)
+                          UserSerializer)
 from .utils import generate_short_hash_mm3, send_email_confirm
 
 from reviews.models import Title, User  # isort: skip
@@ -65,8 +65,43 @@ class ConfirmationEmailAPIView(APIView):
         return Response({'token': token}, status=status.HTTP_200_OK)
 
 
-class UserListCreateViewSet(mixins.ListModelMixin,
-                            viewsets.GenericViewSet):
-    """Получает пользователей списокм или создает нового."""
+class UserViewSet(viewsets.ModelViewSet):
+    """Позволяет выполнить все операции CRUD с пользователями."""
     queryset = User.objects.all()
-    serializer_class = UserListCreateSerializer
+    serializer_class = UserSerializer
+    lookup_field = 'username'
+
+# class UserViewSet(viewsets.ViewSet):
+#     """Позволяет выполнить все операции CRUD с пользователями."""
+#     lookup_field = 'username'
+
+#     def list(self, request):
+#         queryset = User.objects.all()
+#         serializer = UserSerializer(queryset, many=True)
+#         return Response(serializer.data)
+
+#     def create(self, request):
+#         serializer = UserSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+#     def retrieve(self, request, username=None):
+#         queryset = User.objects.all()
+#         user = get_object_or_404(queryset, username=username)
+#         serializer = UserSerializer(user)
+#         return Response(serializer.data)
+
+#     def partial_update(self, request, username=None):
+#         queryset = User.objects.all()
+#         user = get_object_or_404(queryset, username=username)
+#         serializer = UserSerializer(user, data=request.data, partial=True)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+#     def destroy(self, request, username=None):
+#         queryset = User.objects.all()
+#         user = get_object_or_404(queryset, username=username)
+#         user.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)

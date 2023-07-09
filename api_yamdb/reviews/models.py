@@ -27,18 +27,6 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(default=timezone.now)
 
 
-class EmailConfirmation(models.Model):
-    username = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='confirm',
-        verbose_name='Пользователь'
-    )
-    confirmation_code = models.CharField(max_length=10)
-    confirmed = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-
-
 class Category(models.Model):
     name = models.CharField(
         'Название категории',

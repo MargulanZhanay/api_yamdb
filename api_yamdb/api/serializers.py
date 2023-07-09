@@ -107,8 +107,11 @@ class ConfirmRegistrationSerializer(serializers.ModelSerializer):
                 'confirmation_code': confirmation_code}
 
 
-class UserListCreateSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """Получает пользователей списокм или создает нового."""
+    username = serializers.CharField(
+        max_length=150,
+        validators=[RegexValidator(r'^[\w.@+-]+\Z$', 'Некорректный формат.')])
 
     class Meta:
         model = User
