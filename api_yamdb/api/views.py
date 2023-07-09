@@ -67,41 +67,7 @@ class ConfirmationEmailAPIView(APIView):
 
 class UserViewSet(viewsets.ModelViewSet):
     """Позволяет выполнить все операции CRUD с пользователями."""
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
-
-# class UserViewSet(viewsets.ViewSet):
-#     """Позволяет выполнить все операции CRUD с пользователями."""
-#     lookup_field = 'username'
-
-#     def list(self, request):
-#         queryset = User.objects.all()
-#         serializer = UserSerializer(queryset, many=True)
-#         return Response(serializer.data)
-
-#     def create(self, request):
-#         serializer = UserSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-#     def retrieve(self, request, username=None):
-#         queryset = User.objects.all()
-#         user = get_object_or_404(queryset, username=username)
-#         serializer = UserSerializer(user)
-#         return Response(serializer.data)
-
-#     def partial_update(self, request, username=None):
-#         queryset = User.objects.all()
-#         user = get_object_or_404(queryset, username=username)
-#         serializer = UserSerializer(user, data=request.data, partial=True)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-#     def destroy(self, request, username=None):
-#         queryset = User.objects.all()
-#         user = get_object_or_404(queryset, username=username)
-#         user.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
