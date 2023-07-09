@@ -5,7 +5,8 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (CategoryViewSet, CommentsViewSet, ConfirmationEmailAPIView,
                     GenreViewSet, RegistrationAPIView, ReviewViewSet,
-                    TitleViewSet)
+                    TitleViewSet, UserViewSet)
+
 
 # Версия API
 API_VERSION = settings.API_VERSION
@@ -36,6 +37,7 @@ router.register(
     CommentsViewSet,
     basename='comments'
 )
+router.register('users', UserViewSet, basename='user')
 
 urlpatterns = [
     path(f'{API_VERSION}/', include(router.urls)),
