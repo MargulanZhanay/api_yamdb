@@ -1,29 +1,60 @@
 """Сериализаторы приложения api."""
 from django.conf import settings
 from django.core.validators import RegexValidator
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from .utils import generate_short_hash_mm3
+from reviews.models import Category, Comments, Genre, Review, Title, Review, User
 
-from reviews.models import Review, User  # isort: skip
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        exclude = ('id',)
+        model = Category
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
+class GenreSerializer(serializers.ModelSerializer):
 
-    def get_rating(self, obj):
-        reviews = obj.reviews.all()
-        if not reviews:
-            return None
-        total_score = sum(review.score for review in reviews)
-        rating = total_score / len(reviews)
-        return rating
+    class Meta:
+        exclude = ('id',)
+        model = Genre
+
+
+class TitleGetSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(
+        read_only=True,
+        many=True
+    )
+
+    class Meta:
+        model = Title
+        fields = '__all__'
+
+
+class TitlePostSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug'
+    )
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True
+    )
+
+    class Meta:
+        model = Title
+        fields = '__all__'
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    title = serializers.PrimaryKeyRelatedField(read_only=True)
+    """Сериализатор для модели Review."""
+
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True,
@@ -31,14 +62,28 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = '__all__'
         model = Review
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         validators = [
             UniqueTogetherValidator(
                 queryset=Review.objects.all(),
                 fields=['title', 'author']
             )
         ]
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Comments."""
+
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        fields = ('id', 'text', 'author', 'pub_date')
+        model = Comments
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
