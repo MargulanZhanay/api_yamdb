@@ -27,12 +27,18 @@ class IsAdmin(BasePermission):
             return request.user.role == 'admin' or request.user.is_staff
 
 
-class ReadOnly(BasePermission):
+class IsAdminOrReadOnly(BasePermission):
     def has_permission(self, request, view):
-        return request.method in SAFE_METHODS
+        if request.method in SAFE_METHODS:
+            return True
+        if request.user.is_authenticated:
+            return request.user.role == 'admin' or request.user.is_staff
 
     def has_object_permission(self, request, view, obj):
-        return request.method in SAFE_METHODS
+        if request.method in SAFE_METHODS:
+            return True
+        if request.user.is_authenticated:
+            return request.user.role == 'admin' or request.user.is_staff
 
 
 class Me(BasePermission):

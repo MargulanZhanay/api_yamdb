@@ -3,7 +3,7 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .filters import TitleFitler
-from .permissions import IsAdmin, IsRedactor, Me, ReadOnly
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsRedactor, Me
 from .serializers import (CategorySerializer, CommentsSerializer,
                           ConfirmRegistrationSerializer, GenreSerializer,
                           MeSerializer, RegistrationSerializer,
@@ -93,13 +93,13 @@ class MeRetrieveUpdateAPIView(APIView):
 class GenreViewSet(CategoryGenreMixinSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (ReadOnly, IsAdmin)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class CategoryViewSet(CategoryGenreMixinSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (ReadOnly, IsAdmin)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -108,7 +108,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend, )
     filterset_class = TitleFitler
-    permission_classes = (ReadOnly, IsAdmin)
+    permission_classes = (IsAdminOrReadOnly,)
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_serializer_class(self):
