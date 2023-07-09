@@ -1,13 +1,13 @@
 """Сериализаторы приложения api."""
 from django.conf import settings
-from django.core.validators import RegexValidator
 from django.core.mail import send_mail
+from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+from reviews.models import Category, Comments, Genre, Review, Title, User
 
 from .utils import generate_short_hash_mm3
-from reviews.models import Category, Comments, Genre, Review, Title, Review, User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -163,3 +163,13 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'email',
                   'first_name', 'last_name',
                   'bio', 'role')
+
+    def validate(self, data):
+        username = data.get('username')
+
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                {'message':
+                 'Пользователь уже существует.'})
+
+        return data

@@ -14,7 +14,7 @@ class CategoryGenreMixinSet(CreateModelMixin, DestroyModelMixin,
     search_fields = ('name', )
     lookup_field = 'slug'
 
-    
+
 def send_email_confirm(email: str, code: str) -> None:
     """Отправка кода подтверждения на email."""
 

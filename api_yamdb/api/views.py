@@ -3,39 +3,30 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from reviews.models import Category, Genre, Review, Title, User
-from .utils import generate_short_hash_mm3, send_email_confirm, CategoryGenreMixinSet
 from .filters import TitleFitler
+from .permissions import IsAdmin, IsRedactor, Me, ReadOnly
 from .serializers import (CategorySerializer, CommentsSerializer,
                           ConfirmRegistrationSerializer, GenreSerializer,
                           RegistrationSerializer, ReviewSerializer,
                           TitleGetSerializer, TitlePostSerializer,
                           UserSerializer)
+from .utils import (CategoryGenreMixinSet, generate_short_hash_mm3,
+                    send_email_confirm)
 
-
-class ReviewViewSet(viewsets.ModelViewSet):
-    http_method_names = ['get', 'post', 'patch', 'delete']
-    serializer_class = ReviewSerializer
-    permission_classes = ()
-
-    def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, id=title_id)
-        return title.reviews.all()
-
-    def perform_create(self, serializer):
-        title_id = self.kwargs.get('title_id')
-        serializer.save(author=self.request.user, title_id=title_id)
+from reviews.models import Category, Genre, Review, Title, User  # isort: skip
 
 
 class RegistrationAPIView(APIView):
     """Создает нового пользователя. Отправляет код подтверждения."""
     serializer_class = RegistrationSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         """ Создаем или обновялем пользователя с текущим временем
@@ -58,6 +49,7 @@ class RegistrationAPIView(APIView):
 class ConfirmationEmailAPIView(APIView):
     """Подтверждает регистрацию пользователя. Обновляет токен"""
     serializer_class = ConfirmRegistrationSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = ConfirmRegistrationSerializer(data=request.data)
@@ -71,20 +63,35 @@ class ConfirmationEmailAPIView(APIView):
 
 class UserViewSet(viewsets.ModelViewSet):
     """Позволяет выполнить все операции CRUD с пользователями."""
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ('get', 'post', 'patch', 'delete')
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
+    permission_classes = (IsAdmin,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
+
+
+class MeRetrieveUpdateViewSet(mixins.RetrieveModelMixin,
+                              mixins.UpdateModelMixin,
+                              viewsets.GenericViewSet):
+    http_method_names = ('get', 'patch')
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = 'username'
+    permission_classes = (Me,)
 
 
 class GenreViewSet(CategoryGenreMixinSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    permission_classes = (ReadOnly, IsAdmin)
 
 
 class CategoryViewSet(CategoryGenreMixinSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = (ReadOnly, IsAdmin)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -93,7 +100,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend, )
     filterset_class = TitleFitler
-    permission_classes = ()
+    permission_classes = (ReadOnly, IsAdmin)
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_serializer_class(self):
@@ -109,7 +116,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = ReviewSerializer
-    permission_classes = ()
+    permission_classes = (IsRedactor,)
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
@@ -123,7 +130,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
-    permission_classes = ()
+    permission_classes = (IsRedactor,)
 
     def get_queryset(self):
         review_id = self.kwargs.get('review_id')
