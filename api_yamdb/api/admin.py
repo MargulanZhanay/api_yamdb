@@ -12,7 +12,7 @@ class UserAdmin(admin.ModelAdmin):
         'role',
         'email',
         'bio'
-        )
+    )
     list_editable = ('role',)
     search_fields = ('username',)
     empty_value_display = '-пусто-'

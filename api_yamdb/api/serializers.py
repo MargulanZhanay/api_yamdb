@@ -11,20 +11,21 @@ from .utils import generate_short_hash_mm3
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
+    """Сериализатор модели Category."""
     class Meta:
         exclude = ('id',)
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
-
+    """Сериализатор модели Genre."""
     class Meta:
         exclude = ('id',)
         model = Genre
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
+    """Сериализатор вывода модели Title."""
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(
         read_only=True,
@@ -37,6 +38,7 @@ class TitleGetSerializer(serializers.ModelSerializer):
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
+    """Сериализатор ввода модели Title."""
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
         slug_field='slug'
