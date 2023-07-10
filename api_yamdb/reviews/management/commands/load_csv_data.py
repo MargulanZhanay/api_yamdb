@@ -78,11 +78,11 @@ class Command(BaseCommand):
                 User(
                     id=row[0],
                     username=row[1],
+                    first_name=row[5],
+                    last_name=row[6],
                     email=row[2],
                     role=row[3],
                     bio=row[4],
-                    first_name=row[5],
-                    last_name=row[6],
                 ).save()
                 n += 1
                 print(f'done {n}')
@@ -97,9 +97,9 @@ class Command(BaseCommand):
                 author = User.objects.get(id=row[3])
                 Review(
                     id=row[0],
+                    author=author,
                     title_id=title.id,
                     text=row[2],
-                    author=author,
                     score=row[4],
                     pub_date=row[5],
                 ).save()
@@ -116,9 +116,9 @@ class Command(BaseCommand):
                 author = User.objects.get(id=row[3])
                 Comments.objects.create(
                     id=row[0],
+                    author=author,
                     review=review_id,
                     text=row[2],
-                    author=author,
                     pub_date=row[4]
                 ).save()
                 n += 1
