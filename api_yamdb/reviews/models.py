@@ -5,15 +5,15 @@ from django.utils import timezone
 
 from .validators import year_validator
 
+ROLES = [
+    ('user', 'Пользователь'),
+    ('admin', 'Администратор'),
+    ('moderator', 'Модератор'),
+]
+
 
 class User(AbstractUser):
     """Кастомная модель пользователя."""
-    ROLES = [
-        ('user', 'Пользователь'),
-        ('admin', 'Администратор'),
-        ('moderator', 'Модератор'),
-    ]
-
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)

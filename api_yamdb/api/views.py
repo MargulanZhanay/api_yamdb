@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .filters import TitleFitler
-from .permissions import IsAdmin, IsAdminOrReadOnly, IsRedactor, Me
+from .permissions import IsAdmin, IsRedactor, Me, ReadOnly
 from .serializers import (CategorySerializer, CommentsSerializer,
                           ConfirmRegistrationSerializer, GenreSerializer,
                           MeSerializer, RegistrationSerializer,
@@ -93,13 +93,13 @@ class MeRetrieveUpdateAPIView(APIView):
 class GenreViewSet(CategoryGenreMixinSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = [ReadOnly | IsAdmin]
 
 
 class CategoryViewSet(CategoryGenreMixinSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = [ReadOnly | IsAdmin]
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -108,7 +108,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend, )
     filterset_class = TitleFitler
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = [ReadOnly | IsAdmin]
     http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_serializer_class(self):
