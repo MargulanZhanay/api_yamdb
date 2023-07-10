@@ -91,18 +91,21 @@ class MeRetrieveUpdateAPIView(APIView):
 
 
 class GenreViewSet(CategoryGenreMixinSet):
+    """Вьюсет жанр."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = [ReadOnly | IsAdmin]
 
 
 class CategoryViewSet(CategoryGenreMixinSet):
+    """Вьюсет категорий."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [ReadOnly | IsAdmin]
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    """Вьюсет произведений."""
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     )
