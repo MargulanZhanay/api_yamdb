@@ -1,13 +1,13 @@
 """Сериализаторы приложения api."""
 from django.conf import settings
 from django.core.mail import send_mail
+from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
-from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+from reviews.models import Category, Comments, Genre, Review, Title, User
 
-from .models import EmailConfirmation, User
-from reviews.models import Genre, Title, Category, Review
+from .utils import generate_short_hash_mm3
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -30,19 +30,10 @@ class TitleGetSerializer(serializers.ModelSerializer):
         read_only=True,
         many=True
     )
-    rating = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Title
         fields = '__all__'
-
-    def get_rating(self, obj):
-        reviews = obj.reviews.all()
-        if not reviews:
-            return None
-        total_score = sum(review.score for review in reviews)
-        rating = total_score / len(reviews)
-        return rating
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
@@ -62,7 +53,8 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    title = serializers.PrimaryKeyRelatedField(read_only=True)
+    """Сериализатор для модели Review."""
+
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True,
@@ -70,8 +62,8 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = '__all__'
         model = Review
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         validators = [
             UniqueTogetherValidator(
                 queryset=Review.objects.all(),
@@ -80,46 +72,118 @@ class ReviewSerializer(serializers.ModelSerializer):
         ]
 
 
+class CommentsSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Comments."""
+
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        fields = ('id', 'text', 'author', 'pub_date')
+        model = Comments
+
+
 class RegistrationSerializer(serializers.ModelSerializer):
     """Сериализация регистрации пользователя и создания нового."""
+    username = serializers.CharField(
+        max_length=150,
+        validators=[RegexValidator(r'^[\w.@+-]+\Z$', 'Некорректный формат.')])
+    email = serializers.EmailField(max_length=254)
 
     class Meta:
         model = User
         fields = ('username', 'email')
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        email = validated_data.get('email')
-        code = get_random_string(10)
+        return User.objects.update_or_create(**validated_data)
 
-        # Сохранение кода подтверждения в базе данных
-        EmailConfirmation.objects.create(user=user,
-                                         confirmation_code=code)
+    def validate(self, data):
+        username = data.get('username')
+        email = data.get('email')
 
-        # Отправка письма с кодом подтверждения
-        subject = 'Подтверждение регистрации'
-        message = f'Код для подтверждения регистрации: {code}'
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
-        return user
+        # Проверка запрещенных имен пользователя
+        if username in settings.BANNED_USERNAMES:
+            message = f'Имя пользователя {username} запрещено.'
+            raise serializers.ValidationError(
+                {'message': message})
+
+        # Проверка занятости email другим пользователем
+        user = User.objects.filter(email=email)
+        if user.exists() and user[0].username != username:
+            raise serializers.ValidationError(
+                {'message':
+                 f'Данный email={email} занят другим пользователем.'})
+
+        # Проверка соответствия email пользователю
+        user = User.objects.filter(username=username)
+        if user.exists() and user[0].email != email:
+            raise serializers.ValidationError(
+                {'message':
+                 f'У пользователя {user[0]} другой email.'})
+
+        return data
 
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
 
     class Meta:
-        model = EmailConfirmation
-        fields = ('user', 'confirmation_code')
+        model = User
+        fields = ('username', 'confirmation_code')
 
     def validate(self, data):
-        user = get_object_or_404(User, username=data.get('user'))
+        username = data.get('username')
+        user = get_object_or_404(User, username=username)
         confirmation_code = data.get('confirmation_code')
 
         # Если код невалидный выбрасываем исключение
-        try:
-            user.confirm.get(confirmation_code=confirmation_code)
-            print(f'confirmation_code: {confirmation_code}')
-        except EmailConfirmation.DoesNotExist:
+        code = generate_short_hash_mm3(
+            f'{user.username}{user.email}{user.updated_at}')
+        if code != confirmation_code:
             raise serializers.ValidationError(
                 {'message': 'Некорректный код.'})
 
+        return {'username': user,
+                'confirmation_code': confirmation_code}
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Получает пользователей списокм или создает нового."""
+    username = serializers.CharField(
+        max_length=150,
+        validators=[RegexValidator(r'^[\w.@+-]+\Z$', 'Некорректный формат.')])
+
+    class Meta:
+        model = User
+        fields = ('username', 'email',
+                  'first_name', 'last_name',
+                  'bio', 'role')
+
+    def validate(self, data):
+        username = data.get('username')
+
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                {'message':
+                 'Пользователь уже существует.'})
+
         return data
+
+
+class MeSerializer(serializers.ModelSerializer):
+    """Пользователь может получить свои данные и поменять их."""
+    username = serializers.CharField(
+        max_length=150,
+        validators=[RegexValidator(r'^[\w.@+-]+\Z$', 'Некорректный формат.')])
+    role = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email',
+                  'first_name', 'last_name',
+                  'bio', 'role')
