@@ -4,9 +4,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (CategoryViewSet, CommentsViewSet, ConfirmationEmailAPIView,
-                    GenreViewSet, RegistrationAPIView, ReviewViewSet,
-                    TitleViewSet, UserViewSet)
-
+                    GenreViewSet, MeRetrieveUpdateAPIView, RegistrationAPIView,
+                    ReviewViewSet, TitleViewSet, UserViewSet)
 
 # Версия API
 API_VERSION = settings.API_VERSION
@@ -40,7 +39,8 @@ router.register(
 router.register('users', UserViewSet, basename='user')
 
 urlpatterns = [
-    path(f'{API_VERSION}/', include(router.urls)),
     path(f'{API_VERSION}/auth/signup/', RegistrationAPIView.as_view()),
-    path(f'{API_VERSION}/auth/token/', ConfirmationEmailAPIView.as_view())
+    path(f'{API_VERSION}/auth/token/', ConfirmationEmailAPIView.as_view()),
+    path(f'{API_VERSION}/users/me/', MeRetrieveUpdateAPIView.as_view()),
+    path(f'{API_VERSION}/', include(router.urls))
 ]
