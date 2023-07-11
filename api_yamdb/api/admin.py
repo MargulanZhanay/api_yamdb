@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from reviews.models import User, Genre, Category, Title  # isort: skip
+from reviews.models import User, Genre, Category, Title
 
 
 @admin.register(User)

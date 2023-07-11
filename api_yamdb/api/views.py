@@ -19,7 +19,6 @@ from .serializers import (CategorySerializer, CommentsSerializer,
                           TitlePostSerializer, UserSerializer)
 from .utils import (CategoryGenreMixinSet, generate_short_hash_mm3,
                     send_email_confirm)
-
 from reviews.models import Category, Genre, Review, Title, User  # isort: skip
 
 
