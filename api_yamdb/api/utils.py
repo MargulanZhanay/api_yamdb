@@ -1,7 +1,6 @@
 import mmh3
 from django.conf import settings
 from django.core.mail import send_mail
-
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin)
 from rest_framework.viewsets import GenericViewSet

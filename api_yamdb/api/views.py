@@ -3,7 +3,7 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets, filters
+from rest_framework import filters, status, viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -139,8 +139,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_title_id(self):
         title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, id=title_id)
-        return title
+        return get_object_or_404(Title, id=title_id)
 
     def get_queryset(self):
         return self.get_title_id().reviews.all()
@@ -158,8 +157,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
     def get_review_id(self):
         review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, id=review_id)
-        return review
+        return get_object_or_404(Review, id=review_id)
 
     def get_queryset(self):
         return self.get_review_id().comments.all()

@@ -42,8 +42,7 @@ class TitleGetSerializer(serializers.ModelSerializer):
         if not reviews:
             return None
         total_score = sum(review.score for review in reviews)
-        rating = total_score / len(reviews)
-        return rating
+        return total_score / len(reviews)
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
