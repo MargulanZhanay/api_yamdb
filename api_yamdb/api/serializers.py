@@ -1,10 +1,8 @@
 """Сериализаторы приложения api."""
 from django.conf import settings
-from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 from reviews.models import Category, Comments, Genre, Review, Title, User
 
 from .utils import generate_short_hash_mm3
@@ -33,10 +31,19 @@ class TitleGetSerializer(serializers.ModelSerializer):
         read_only=True,
         many=True
     )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = '__all__'
+
+    def get_rating(self, title):
+        reviews = title.reviews.all()
+        if not reviews:
+            return None
+        total_score = sum(review.score for review in reviews)
+        rating = total_score / len(reviews)
+        return rating
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
@@ -57,7 +64,7 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели Review."""
+    """Сериализатор модели Review."""
 
     author = serializers.SlugRelatedField(
         slug_field='username',
@@ -68,12 +75,20 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=['title', 'author']
+
+    def validate(self, data):
+        """Пользователь может оставить только один отзыв на произведение."""
+
+        if self.context.get('request').method != 'POST':
+            return data
+        author = self.context.get('request').user
+        title_id = self.context.get('view').kwargs.get('title_id')
+        review = Review.objects.filter(title=title_id, author=author)
+        if review.exists():
+            raise serializers.ValidationError(
+                'Вы уже оставили отзыв на это произведение.'
             )
-        ]
+        return data
 
 
 class CommentsSerializer(serializers.ModelSerializer):
