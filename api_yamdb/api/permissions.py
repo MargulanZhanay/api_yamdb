@@ -4,7 +4,9 @@ REDACTORS = ['admin', 'moderator']
 
 
 class IsRedactor(BasePermission):
-    """Проверяет право пользователя на редактирвоание."""
+    """ Чтение - все.
+        Создание - авторизованные пользователи.
+        Редактирование - автор, модератор, админ."""
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return True
@@ -20,16 +22,20 @@ class IsRedactor(BasePermission):
 
 
 class IsAdmin(BasePermission):
+    """Права админа."""
     def has_permission(self, request, view):
         if request.user.is_authenticated:
             return request.user.role == 'admin' or request.user.is_staff
+        return False
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_authenticated:
             return request.user.role == 'admin' or request.user.is_staff
+        return False
 
 
 class ReadOnly(BasePermission):
+    """Права на чтение всем, без токена."""
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS
 
@@ -38,6 +44,8 @@ class ReadOnly(BasePermission):
 
 
 class Me(BasePermission):
+    """Права на получение/изменение своего профиля,
+    авторизованному пользователю."""
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
