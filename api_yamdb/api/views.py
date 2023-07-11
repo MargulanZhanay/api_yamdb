@@ -131,29 +131,38 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    """Вьюсет отзывов."""
+
     http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = ReviewSerializer
     permission_classes = (IsRedactor,)
 
-    def get_queryset(self):
+    def get_title_id(self):
         title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Title, id=title_id)
-        return title.reviews.all()
+        return title
+
+    def get_queryset(self):
+        return self.get_title_id().reviews.all()
 
     def perform_create(self, serializer):
-        title_id = self.kwargs.get('title_id')
-        serializer.save(author=self.request.user, title_id=title_id)
+        serializer.save(author=self.request.user, title=self.get_title_id())
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
+    """Вьюсет комментариев."""
+
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = CommentsSerializer
     permission_classes = (IsRedactor,)
 
-    def get_queryset(self):
+    def get_review_id(self):
         review_id = self.kwargs.get('review_id')
         review = get_object_or_404(Review, id=review_id)
-        return review.comments.all()
+        return review
+
+    def get_queryset(self):
+        return self.get_review_id().comments.all()
 
     def perform_create(self, serializer):
-        review_id = self.kwargs.get('review_id')
-        serializer.save(author=self.request.user, review_id=review_id)
+        serializer.save(author=self.request.user, review=self.get_review_id())
