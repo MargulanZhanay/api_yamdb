@@ -8,9 +8,7 @@ class IsRedactor(BasePermission):
         Создание - авторизованные пользователи.
         Редактирование - автор, модератор, админ."""
     def has_permission(self, request, view):
-        if request.method in SAFE_METHODS:
-            return True
-        return request.user.is_authenticated
+        return request.user.is_authenticated or request.method in SAFE_METHODS
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
