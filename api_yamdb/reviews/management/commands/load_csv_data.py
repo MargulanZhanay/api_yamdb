@@ -3,7 +3,7 @@ import csv
 from django.core.management import BaseCommand
 
 from reviews.models import Comments, Review
-from titles.models import Category, Genre, GenreTitle, Title
+from titles.models import Category, Genre, Title
 from users.models import User
 
 
@@ -58,7 +58,7 @@ class Command(BaseCommand):
             for row in reader:
                 title_id = Title.objects.get(id=row[1])
                 genre_id = Genre.objects.get(id=row[2])
-                GenreTitle(id=row[0], title=title_id, genre=genre_id).save()
+                genre_id.titles.add(title_id)
                 n += 1
                 print(f"done {n}")
 

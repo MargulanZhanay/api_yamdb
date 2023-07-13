@@ -58,18 +58,3 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class GenreTitle(models.Model):
-    """Создал модель для того чтобы добавить данные из csv в bridge entity."""
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-    )
-    genre = models.ForeignKey(
-        Genre,
-        on_delete=models.CASCADE,
-    )
-
-    def __str__(self) -> str:
-        return f"{self.title} {self.genre}"
