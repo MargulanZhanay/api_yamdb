@@ -18,8 +18,9 @@ from api.serializers import (CategorySerializer, CommentsSerializer,
                              TitlePostSerializer, UserSerializer)
 from api.utils import (CategoryGenreMixinSet, generate_short_hash_mm3,
                        send_email_confirm)
-from reviews.models import Review, User
+from reviews.models import Review
 from titles.models import Category, Genre, Title
+from users.models import User
 
 
 class RegistrationAPIView(APIView):
