@@ -2,15 +2,13 @@ import csv
 
 from django.core.management import BaseCommand
 from reviews.models import Comments, Review, User
-from titles.models import Category, Title, Genre, GenreTitle
+from titles.models import Category, Genre, GenreTitle, Title
 
 
 class Command(BaseCommand):
-
     def handle(self, *args, **kwarg):
-
-        self.stdout.write(self.style.SUCCESS('Загружаем данные Category'))
-        with open('static/data/category.csv', encoding='utf-8') as csv_file:
+        self.stdout.write(self.style.SUCCESS("Загружаем данные Category"))
+        with open("static/data/category.csv", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             n = 0
@@ -21,10 +19,10 @@ class Command(BaseCommand):
                     slug=row[2],
                 ).save()
                 n += 1
-                print(f'done {n}')
+                print(f"done {n}")
 
-        self.stdout.write(self.style.SUCCESS('Загружаем данные Genre'))
-        with open('static/data/genre.csv', encoding='utf-8') as csv_file:
+        self.stdout.write(self.style.SUCCESS("Загружаем данные Genre"))
+        with open("static/data/genre.csv", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             n = 0
@@ -35,42 +33,35 @@ class Command(BaseCommand):
                     slug=row[2],
                 ).save()
                 n += 1
-                print(f'done {n}')
+                print(f"done {n}")
 
-        self.stdout.write(self.style.SUCCESS('Загружаем данные Title'))
-        with open('static/data/titles.csv', encoding='utf-8') as csv_file:
+        self.stdout.write(self.style.SUCCESS("Загружаем данные Title"))
+        with open("static/data/titles.csv", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             n = 0
             for row in reader:
                 category = Category.objects.get(id=row[3])
                 Title(
-                    id=row[0],
-                    name=row[1],
-                    year=row[2],
-                    category=category
+                    id=row[0], name=row[1], year=row[2], category=category
                 ).save()
                 n += 1
-                print(f'done {n}')
+                print(f"done {n}")
 
-        self.stdout.write(self.style.SUCCESS('Загружаем данные GenreTitle'))
-        with open('static/data/genre_title.csv', encoding='utf-8') as csv_file:
+        self.stdout.write(self.style.SUCCESS("Загружаем данные GenreTitle"))
+        with open("static/data/genre_title.csv", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             n = 0
             for row in reader:
                 title_id = Title.objects.get(id=row[1])
                 genre_id = Genre.objects.get(id=row[2])
-                GenreTitle(
-                    id=row[0],
-                    title=title_id,
-                    genre=genre_id
-                ).save()
+                GenreTitle(id=row[0], title=title_id, genre=genre_id).save()
                 n += 1
-                print(f'done {n}')
+                print(f"done {n}")
 
-        self.stdout.write(self.style.SUCCESS('Загружаем данные User'))
-        with open('static/data/users.csv', encoding='utf-8') as csv_file:
+        self.stdout.write(self.style.SUCCESS("Загружаем данные User"))
+        with open("static/data/users.csv", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             n = 0
@@ -85,10 +76,10 @@ class Command(BaseCommand):
                     bio=row[4],
                 ).save()
                 n += 1
-                print(f'done {n}')
+                print(f"done {n}")
 
-        self.stdout.write(self.style.SUCCESS('Загружаем данные Review'))
-        with open('static/data/review.csv', encoding='utf-8') as csv_file:
+        self.stdout.write(self.style.SUCCESS("Загружаем данные Review"))
+        with open("static/data/review.csv", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             n = 0
@@ -104,10 +95,10 @@ class Command(BaseCommand):
                     pub_date=row[5],
                 ).save()
                 n += 1
-                print(f'done {n}')
+                print(f"done {n}")
 
-        self.stdout.write(self.style.SUCCESS('Загружаем данные Comments'))
-        with open('static/data/comments.csv', encoding='utf-8') as csv_file:
+        self.stdout.write(self.style.SUCCESS("Загружаем данные Comments"))
+        with open("static/data/comments.csv", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             next(reader)
             n = 0
@@ -119,7 +110,7 @@ class Command(BaseCommand):
                     author=author,
                     review=review_id,
                     text=row[2],
-                    pub_date=row[4]
+                    pub_date=row[4],
                 ).save()
                 n += 1
-                print(f'done {n}')
+                print(f"done {n}")

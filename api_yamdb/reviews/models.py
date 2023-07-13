@@ -5,25 +5,26 @@ from django.utils import timezone
 
 from titles.models import Title
 
-ROLES = [
-    ('user', 'Пользователь'),
-    ('admin', 'Администратор'),
-    ('moderator', 'Модератор'),
-]
-
 
 class User(AbstractUser):
     """Кастомная модель пользователя."""
+    ROLES = [
+        ("user", "Пользователь"),
+        ("admin", "Администратор"),
+        ("moderator", "Модератор"),
+    ]
+
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     email = models.EmailField(max_length=254, unique=True)
-    role = models.CharField(max_length=15,
-                            choices=ROLES,
-                            default='user',
-                            verbose_name='Роль пользователя',
-                            )
-    bio = models.TextField(verbose_name='Биография', blank=True)
+    role = models.CharField(
+        max_length=15,
+        choices=ROLES,
+        default="user",
+        verbose_name="Роль пользователя",
+    )
+    bio = models.TextField(verbose_name="Биография", blank=True)
     updated_at = models.DateTimeField(default=timezone.now)
 
 
@@ -31,35 +32,31 @@ class Review(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='reviews',
-        verbose_name='Автор'
+        related_name="reviews",
+        verbose_name="Автор",
     )
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='reviews',
-        verbose_name='Произведение'
+        related_name="reviews",
+        verbose_name="Произведение",
     )
     text = models.TextField()
     score = models.IntegerField(
-        'Оценка от 1 до 10',
-        validators=[MaxValueValidator(10),
-                    MinValueValidator(1)]
+        "Оценка от 1 до 10",
+        validators=[MaxValueValidator(10), MinValueValidator(1)],
     )
     pub_date = models.DateTimeField(
-        'Дата добавления',
-        auto_now_add=True,
-        db_index=True
+        "Дата добавления", auto_now_add=True, db_index=True
     )
 
     class Meta:
-        verbose_name = 'Отзыв'
-        verbose_name_plural = 'Отзывы'
-        ordering = ('-pub_date',)
+        verbose_name = "Отзыв"
+        verbose_name_plural = "Отзывы"
+        ordering = ("-pub_date",)
         constraints = [
             models.UniqueConstraint(
-                fields=['title_id', 'author'],
-                name='unique_review'
+                fields=["title_id", "author"], name="unique_review"
             ),
         ]
 
@@ -68,26 +65,24 @@ class Comments(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='Автор'
+        related_name="comments",
+        verbose_name="Автор",
     )
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='Отзыв'
+        related_name="comments",
+        verbose_name="Отзыв",
     )
     text = models.TextField()
     pub_date = models.DateTimeField(
-        'Дата добавления',
-        auto_now_add=True,
-        db_index=True
+        "Дата добавления", auto_now_add=True, db_index=True
     )
 
     class Meta:
-        verbose_name = 'Комментарий'
-        verbose_name_plural = 'Комментарии'
-        ordering = ('-pub_date',)
+        verbose_name = "Комментарий"
+        verbose_name_plural = "Комментарии"
+        ordering = ("-pub_date",)
 
     def __str__(self):
         return self.text
