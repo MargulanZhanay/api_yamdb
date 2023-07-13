@@ -3,8 +3,9 @@ from django.conf import settings
 from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from reviews.models import Category, Comments, Genre, Review, Title, User
+from reviews.models import Comments, Review, User
 
+from titles.models import Category, Title, Genre
 from .utils import generate_short_hash_mm3
 
 
