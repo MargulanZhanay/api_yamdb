@@ -1,11 +1,8 @@
 import mmh3
 from django.conf import settings
 from django.core.mail import send_mail
-from rest_framework.mixins import (
-    CreateModelMixin,
-    DestroyModelMixin,
-    ListModelMixin,
-)
+from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
+                                   ListModelMixin)
 from rest_framework.viewsets import GenericViewSet
 
 
@@ -17,7 +14,6 @@ class CategoryGenreMixinSet(
 
 def send_email_confirm(email: str, code: str) -> None:
     """Отправка кода подтверждения на email."""
-
     subject = "Подтверждение регистрации"
     message = f"Код для подтверждения регистрации: {code}"
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])

@@ -10,33 +10,21 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .filters import TitleFitler
-from .permissions import IsAdmin, IsRedactor, Me, ReadOnly
-from .serializers import (
-    CategorySerializer,
-    CommentsSerializer,
-    ConfirmRegistrationSerializer,
-    GenreSerializer,
-    MeSerializer,
-    RegistrationSerializer,
-    ReviewSerializer,
-    TitleGetSerializer,
-    TitlePostSerializer,
-    UserSerializer,
-)
-from .utils import (
-    CategoryGenreMixinSet,
-    generate_short_hash_mm3,
-    send_email_confirm,
-)
-
-from reviews.models import Category, Genre, Review, Title  # isort: skip
-from users.models import User  # isort: skip
+from api.filters import TitleFitler
+from api.permissions import IsAdmin, IsRedactor, Me, ReadOnly
+from api.serializers import (CategorySerializer, CommentsSerializer,
+                             ConfirmRegistrationSerializer, GenreSerializer,
+                             MeSerializer, RegistrationSerializer,
+                             ReviewSerializer, TitleGetSerializer,
+                             TitlePostSerializer, UserSerializer)
+from api.utils import (CategoryGenreMixinSet, generate_short_hash_mm3,
+                       send_email_confirm)
+from reviews.models import Category, Genre, Review, Title
+from users.models import User
 
 
 class RegistrationAPIView(APIView):
     """Создает нового пользователя. Отправляет код подтверждения."""
-
     permission_classes = (AllowAny,)
 
     def post(self, request):
@@ -59,7 +47,6 @@ class RegistrationAPIView(APIView):
 
 class ConfirmationEmailAPIView(APIView):
     """Подтверждает регистрацию пользователя. Обновляет токен"""
-
     permission_classes = (AllowAny,)
 
     def post(self, request):
@@ -77,7 +64,6 @@ class ConfirmationEmailAPIView(APIView):
 
 class UserViewSet(viewsets.ModelViewSet):
     """Позволяет выполнить все операции CRUD с пользователями."""
-
     http_method_names = ("get", "post", "patch", "delete")
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -89,7 +75,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class MeRetrieveUpdateAPIView(APIView):
     """Пользователь может получить свои данные и поменять их."""
-
     permission_classes = (Me,)
 
     def get(self, request):
@@ -107,7 +92,6 @@ class MeRetrieveUpdateAPIView(APIView):
 
 class GenreViewSet(CategoryGenreMixinSet):
     """Вьюсет жанр."""
-
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = [ReadOnly | IsAdmin]
@@ -118,7 +102,6 @@ class GenreViewSet(CategoryGenreMixinSet):
 
 class CategoryViewSet(CategoryGenreMixinSet):
     """Вьюсет категорий."""
-
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [ReadOnly | IsAdmin]
@@ -129,7 +112,6 @@ class CategoryViewSet(CategoryGenreMixinSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет произведений."""
-
     queryset = Title.objects.annotate(rating=Avg("reviews__score"))
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFitler
@@ -148,7 +130,6 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """Вьюсет отзывов."""
-
     http_method_names = ["get", "post", "patch", "delete"]
     serializer_class = ReviewSerializer
     permission_classes = (IsRedactor,)
@@ -166,7 +147,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentsViewSet(viewsets.ModelViewSet):
     """Вьюсет комментариев."""
-
     http_method_names = ["get", "post", "patch", "delete"]
     serializer_class = CommentsSerializer
     permission_classes = (IsRedactor,)

@@ -5,7 +5,6 @@ from django.utils import timezone
 
 class User(AbstractUser):
     """Кастомная модель пользователя."""
-
     ROLES = [
         ("user", "Пользователь"),
         ("admin", "Администратор"),

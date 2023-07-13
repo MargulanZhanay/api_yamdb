@@ -4,15 +4,9 @@ from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .utils import generate_short_hash_mm3  # isort: skip
-from reviews.models import (
-    Category,
-    Comments,
-    Genre,
-    Review,
-    Title,
-)  # isort: skip
-from users.models import User  # isort: skip
+from api.utils import generate_short_hash_mm3
+from reviews.models import Category, Comments, Genre, Review, Title
+from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -35,7 +29,6 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class TitleGetSerializer(serializers.ModelSerializer):
     """Сериализатор вывода модели Title."""
-
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
     rating = serializers.SerializerMethodField()
@@ -54,7 +47,6 @@ class TitleGetSerializer(serializers.ModelSerializer):
 
 class TitlePostSerializer(serializers.ModelSerializer):
     """Сериализатор ввода модели Title."""
-
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(), slug_field="slug"
     )
@@ -69,7 +61,6 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор модели Review."""
-
     author = serializers.SlugRelatedField(
         slug_field="username",
         read_only=True,
@@ -82,7 +73,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Пользователь может оставить только один отзыв на произведение."""
-
         if self.context.get("request").method != "POST":
             return data
         author = self.context.get("request").user
@@ -97,7 +87,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class CommentsSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Comments."""
-
     author = serializers.SlugRelatedField(
         slug_field="username",
         read_only=True,
@@ -111,7 +100,6 @@ class CommentsSerializer(serializers.ModelSerializer):
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """Сериализация регистрации пользователя и создания нового."""
-
     username = serializers.CharField(
         max_length=150,
         validators=[RegexValidator(r"^[\w.@+-]+\Z$", "Некорректный формат.")],
@@ -138,9 +126,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
         user = User.objects.filter(email=email)
         if user.exists() and user[0].username != username:
             raise serializers.ValidationError(
-                {
-                    "message": f"Данный email={email} занят другим пользователем."
-                }
+                {"message":
+                 f"Данный email={email} занят другим пользователем."}
             )
 
         # Проверка соответствия email пользователю
@@ -155,7 +142,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class ConfirmRegistrationSerializer(serializers.ModelSerializer):
     """Подтверждение регистрации."""
-
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
@@ -180,7 +166,6 @@ class ConfirmRegistrationSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Получает пользователей списокм или создает нового."""
-
     username = serializers.CharField(
         max_length=150,
         validators=[RegexValidator(r"^[\w.@+-]+\Z$", "Некорректный формат.")],
@@ -210,7 +195,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 class MeSerializer(serializers.ModelSerializer):
     """Пользователь может получить свои данные и поменять их."""
-
     username = serializers.CharField(
         max_length=150,
         validators=[RegexValidator(r"^[\w.@+-]+\Z$", "Некорректный формат.")],
