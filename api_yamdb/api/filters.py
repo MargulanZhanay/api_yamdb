@@ -1,11 +1,10 @@
 from django_filters import rest_framework as filters
 
-from reviews.models import Title
+from titles.models import Title
 
 
 class TitleFitler(filters.FilterSet):
     """Фильтры произведений."""
-
     name = filters.CharFilter(field_name="name", lookup_expr="contains")
     year = filters.NumberFilter(field_name="year", lookup_expr="contains")
     category = filters.CharFilter(

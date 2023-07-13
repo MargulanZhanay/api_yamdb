@@ -5,7 +5,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from api.utils import generate_short_hash_mm3
-from reviews.models import Category, Comments, Genre, Review, Title
+from reviews.models import Comments, Review
+from titles.models import Category, Genre, Title
 from users.models import User
 
 

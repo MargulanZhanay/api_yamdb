@@ -4,7 +4,6 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
-from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,7 +18,8 @@ from api.serializers import (CategorySerializer, CommentsSerializer,
                              TitlePostSerializer, UserSerializer)
 from api.utils import (CategoryGenreMixinSet, generate_short_hash_mm3,
                        send_email_confirm)
-from reviews.models import Category, Genre, Review, Title
+from reviews.models import Review
+from titles.models import Category, Genre, Title
 from users.models import User
 
 
@@ -69,7 +69,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     lookup_field = "username"
     permission_classes = (IsAdmin,)
-    filter_backends = (SearchFilter,)
+    filter_backends = (filters.SearchFilter,)
     search_fields = ("username",)
 
 
